@@ -33,86 +33,96 @@ class Produto (models.Model):
     # cria a função
     def __str__(self):
         return f"{self.nome} (qtde={self.quantidade})"
+    
 
 
-    # cria a classe cliente 
-    class Cliente(models.Model):
-        nome =  models.Charfild(max_leght = 150)
-        email = models.EmailField(
-            unique = True # registra como unico o email
+# Cria a classe cliente
+
+class Cliente(models.Model):
+    
+    nome = models.CharField(max_length = 150)
+    email = models.EmailField(
+        unique = True # Registra como unico o email
+    )
+    
+    telefone = models.CharField(
+        max_length = 20,
+        blank = True # pode deixar em branco
+    )
+    
+    
+    def __str__(self):
+        return self.nome
+    
+    
+    
+    # Cria a classe Pedido
+    
+class Pedido (models.Model):
+    STATUS_CHOICES = [
+        ("PENDENTE", "Pendente"),
+        ("PAGO", "Pago"),
+        ("ENVIADO","Enviado"),
+        ("ENTREGUE", "Entregue"),
+        ("CANCELADO","Cancelado")
+    ]
+    
+    # relacionando cliente com pedidos
+    
+    cliente = models.ForeignKey(
+        Cliente,
+        on_delete = models.CASCADE,
+        related_name = "pedidos"
+    )
+    
+    data_pedido = models.DateTimeField(
+        auto_now_add = True
+    )
+    
+    status = models.CharField(
+        max_length = 20,
+        choices = STATUS_CHOICES,
+        default = "PENDENTE"
+    )
+    
+    
+    def total(self):
+        return sum(
+            item.subtotal()
+            for item in self.itens.all()
         )
-
-        telefone = models.CharField(
-            max_leght = 20,
-            blank = True # pode deixar em branco 
-
-        )
-
-        def __str__(self):
-            return self.nome
+    
+    def __str__(self):
+        
+        return f"Pedido {self.id} - {self.cliente.nome}"
+    
 
 
-        # cria a classe pedido 
-
-    class Pedido(models.Model): 
-        STATUS_CHOICES = [
-            ('PENDENTES', 'Pendentes'),
-            ('PAGO', 'Pago'),
-            ('ENVIADO', 'Enviado'),
-            ('ENTREGUE', 'Entregue'),
-            ('CANCELADO', 'Cancelado')
-        ]
-
-        # relacionando cliente com pedido 
-
-        cliente = models.ForeignKey(
-            Cliente,
-            on_delete = models.CASCADE,
-            related_name = 'pedidos'
-        )
-
-        data_pedido = models.DateTimeField(
-            auto_now_add = True
-        )
-
-        status = models.CharField(
-            max_lenght = 20, 
-            choices = STATUS_CHOICES,
-            default = 'PENDENTE'
-        )
-
-
-        def __str__(self):
-
-            return f'Pedido {self.id} - {self.cliente.nome}'
-
-# Cria a classe item pedido 
+# Cria  a classe item pedido
 
 class ItemPedido(models.Model):
+    
     pedido = models.ForeignKey(
         Pedido,
         on_delete = models.CASCADE,
         related_name = 'itens'
     )
-
+    
     produto = models.ForeignKey(
-        Prroduto,
+        Produto,
         on_delete = models.PROTECT)
-
-
-    quantidade = modelsPositiveIntegerField()
-
-    preco_unitario = models.DecimalField(
-        max_digits = 10, 
+    
+    
+    quantidade = models.PositiveIntegerField() 
+    
+    preco_unitario =models.DecimalField(
+        max_digits = 10,
         decimal_places = 2
     )
-
-
-
-    def subtotal (self):
-
-        return self.quantidade * self.preco_unitario
-
-    def __str__(self):
-        return f'{self.quantidade} x {self.produto.nome}'
     
+    def subtotal (self):
+        
+        return self.quantidade * self.preco_unitario
+    
+    def __str__(self):
+        return f"{self.quantidade} x {self.produto.nome}"
